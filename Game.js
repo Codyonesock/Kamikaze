@@ -9,9 +9,13 @@
 
     // frame rate of game
     var frameRate = 24;
+
     // game objects
     var assetManager = null;
-    var snake = null;
+    var ship = null;
+
+    //settings
+    var speed = 8;
 
     //key booleans
     var downKey = false;
@@ -20,23 +24,23 @@
     var rightKey = false;
 
     //------------------------------------------------------------- private methods
-    function monitorKeys() {
-        if (leftKey) {
-            snake.mover.setDirection(MoverDirection.LEFT);
-            snake.mover.startMe();
-        } else if (rightKey) {
-            snake.mover.setDirection(MoverDirection.RIGHT);
-            snake.mover.startMe();
-        } else if (upKey) {
-            snake.mover.setDirection(MoverDirection.UP);
-            snake.mover.startMe();
-        } else if (downKey) {
-            snake.mover.setDirection(MoverDirection.DOWN);
-            snake.mover.startMe();
-        } else {
-            snake.mover.stopMe();
-        }
-    }
+    // function monitorKeys() {
+    //     if (leftKey) {
+    //         ship.mover.setDirection(MoverDirection.LEFT);
+    //         ship.mover.startMe();
+    //     } else if (rightKey) {
+    //         ship.mover.setDirection(MoverDirection.RIGHT);
+    //         ship.mover.startMe();
+    //     } else if (upKey) {
+    //         ship.mover.setDirection(MoverDirection.UP);
+    //         ship.mover.startMe();
+    //     } else if (downKey) {
+    //         ship.mover.setDirection(MoverDirection.DOWN);
+    //         ship.mover.startMe();
+    //     } else {
+    //         ship.mover.stopMe();
+    //     }
+    // }
 
     // ------------------------------------------------------------ event handlers
     function onInit() {
@@ -45,8 +49,8 @@
         // get reference to canvas
         canvas = document.getElementById("stage");
         // set canvas to as wide/high as the browser window
-        canvas.width = 600;
-        canvas.height = 600;
+        canvas.width = 640;
+        canvas.height = 480;
         // create stage object
         stage = new createjs.Stage(canvas);
 
@@ -68,15 +72,15 @@
         rightKey = false;
         
         // construct game object sprites
-        snake = assetManager.getSprite("assets");
-        snake.x = 275;
-        snake.y = 500;
-        snake.gotoAndStop("Player");
-        snake.regX = snake.getBounds().width/2;
-        snake.regY = snake.getBounds().height/2;
-        snake.mover = new Mover(snake, stage);
-        snake.mover.setSpeed(4);        
-        stage.addChild(snake);
+        ship = assetManager.getSprite("assets");
+        ship.x = 320;
+        ship.y = 450;
+        ship.gotoAndStop("Player");
+        ship.regX = ship.getBounds().width/2;
+        ship.regY = ship.getBounds().height/2;
+        // ship.mover = new Mover(ship, stage);
+        // ship.mover.setSpeed(8);        
+        stage.addChild(ship);
 
         //setup event listeners for Keyboard
         document.addEventListener("keydown", onKeyDown);
@@ -89,31 +93,76 @@
         console.log(">> game ready");
     }
 
-    function onKeyDown(e) {
-        //console.log("key was pressed " + e.keyCode);
-        if (e.keyCode == 37) leftKey = true;
-        else if (e.keyCode == 39) rightKey = true;
-        else if (e.keyCode == 38) upKey = true;
-        else if (e.keyCode == 40) downKey = true;                        
-    }
+    function onKeyDown(e) {       
+    if(!e){ var e = window.event; }                
+    switch(e.keyCode) {  
+        // left  
+        case 37: leftKey = true; rightKey = false;      
+        break;                    
+        // up  
+        case 38: upKey = true; downKey = false;  
+        break;                    
+        // right  
+        case 39: rightKey = true; leftKey = false;  
+        break;                                        
+        // down  
+        case 40: downKey = true; upKey = false;  
+        break;  
+    }  
+}  
 
-    function onKeyUp(e) {
-        //console.log("key was pressed " + e.keyCode);
-        if (e.keyCode == 37) leftKey = false;
-        else if (e.keyCode == 39) rightKey = false;
-        else if (e.keyCode == 38) upKey = false;
-        else if (e.keyCode == 40) downKey = false;
-    }
+    function onKeyUp(e) {         
+     if(!e){ var e = window.event; }  
+     switch(e.keyCode) {  
+        // left  
+        case 37: leftKey = false;   
+        break;                    
+        // up  
+        case 38: upKey = false;  
+        break;  
+        // right  
+        case 39: rightKey = false;  
+        break;  
+        // down  
+        case 40: downKey = false;  
+        break;    
+    }  
+}
+
+    //using this to check for movement and to set a boundry
+    function checkMovement() {  
+    if (leftKey) {  
+        ship.x -= speed;  
+        if (ship.x < 0)  
+            ship.x = 640;  
+    }  
+    else if (rightKey) {  
+        ship.x += speed;  
+        if (ship.x > 640)  
+            ship.x = 0;  
+    }                    
+    if (upKey) {  
+        if (ship.y - speed > 24)  
+            ship.y -= speed;  
+    }  
+    else if (downKey) {  
+        if (ship.y + speed < 460)  
+            ship.y += speed;  
+    }  
+}
 
     function onTick(e) {
         // TESTING FPS
         document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());
 
         //calling the method to monitor keys
-        monitorKeys();
+        // monitorKeys();
+
+        //checking for player movement for each frame
+        checkMovement();
 
         // game loop code here
-        snake.mover.update();
+        // ship.mover.update();
 
         // update the stage!
         stage.update();
