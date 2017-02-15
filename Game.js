@@ -131,16 +131,15 @@
 
     //using this to check for movement and to set a boundry
     function checkMovement() {  
+    //set a boundry for top/down/right/left -- think of it as an invisible border around the canvas
     if (leftKey) {  
-        ship.x -= speed;  
-        if (ship.x < 0)  
-            ship.x = 640;  
+        if (ship.x - speed > 20)  
+            ship.x -= speed;  
     }  
     else if (rightKey) {  
-        ship.x += speed;  
-        if (ship.x > 640)  
-            ship.x = 0;  
-    }                    
+        if (ship.x + speed < 620)  
+            ship.x += speed;  
+    }                        
     if (upKey) {  
         if (ship.y - speed > 24)  
             ship.y -= speed;  
