@@ -23,6 +23,10 @@
     var leftKey = false;
     var rightKey = false;
 
+    //background objects
+    var stars;    
+    var shape;
+
     //------------------------------------------------------------- private methods
     // function monitorKeys() {
     //     if (leftKey) {
@@ -54,11 +58,62 @@
         // create stage object
         stage = new createjs.Stage(canvas);
 
+        //background graphics
+        drawBackground();
+
         // construct preloader object to load spritesheet and sound assets
         assetManager = new AssetManager(stage);
         stage.addEventListener("onAllAssetsLoaded", onSetup);
         // load the assets
         assetManager.loadAssets(manifest);
+    }
+
+    //function that returns a random range based off min and max
+    function randomRange(min, max) {
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    function drawBackground(e) {
+        //array for the stars
+        stars = new Array();
+
+        //drawing a circle and setting stroke/fill colors
+        var graphics = new createjs.Graphics();
+        graphics.setStrokeStyle(1);
+        graphics.beginStroke("#ffffff");
+        graphics.beginFill("#ffffff");
+        graphics.drawCircle(0,0,1);
+
+        //putting stars in random places using the randomRange function and adding to the stage
+        for (var i = 0; i < 100; i++) {
+            shape = new createjs.Shape(graphics);
+            stars.push(shape);
+            shape.x = randomRange(10, 630);
+            shape.y = randomRange(-250, 470);
+            shape.scaleX = randomRange(0.5, 2);
+            shape.scaleY = shape.scaleX;
+            shape.alpha = Math.random() + 0.2;
+            
+            stage.addChild(shape);
+        }
+    }
+
+    /* This function loops through the stars array and updates the Y value
+       position by adding 4 to it. It then checks to see if the new Y value
+       is greater than the stages height (in this case 480) if it is then it
+       sets the star to a new position at the top of the stage thus creating
+       a scrolling effect and stars in different places */
+    function updateBackground(e) {
+        var currentStar;
+        var limit = stars.length;
+        for (var i = 0; i < limit; ++i) {
+            currentStar = stars[i];
+            currentStar.y += 4;
+            if (currentStar.y > 480) {
+                currentStar.x = randomRange(10, 630);
+                currentStar.y = -randomRange(20, 450);
+            }
+        }
     }
 
     function onSetup(e) {
@@ -156,6 +211,9 @@
 
         //calling the method to monitor keys
         // monitorKeys();
+
+        //updating the background
+        updateBackground();
 
         //checking for player movement for each frame
         checkMovement();
