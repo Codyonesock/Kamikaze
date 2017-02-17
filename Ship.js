@@ -1,4 +1,10 @@
 // var Ship = function(assetManager, stage) {
+//     "use strict";
+
+//     //initialization
+
+
+
 //     //custom event
 //     var eventScreenComplete = new createjs.Event("shipMoving");    
 

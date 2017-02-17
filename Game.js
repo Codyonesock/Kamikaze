@@ -14,8 +14,14 @@
     var assetManager = null;
     var ship = null;
 
+    //bullet objects
+    var bulletArray;
+    var bulletGraphics;
+    var bulletShape;
+
     //settings
-    var speed = 8;
+    var shipSpeed = 8;
+    var bulletSpeed = 20;
 
     //key booleans
     var downKey = false;
@@ -25,7 +31,7 @@
 
     //background objects
     var stars;    
-    var shape;
+    var starShape;
 
     //------------------------------------------------------------- private methods
     // function monitorKeys() {
@@ -49,6 +55,16 @@
     // ------------------------------------------------------------ event handlers
     function onInit() {
         console.log(">> initializing");
+
+        //bullet drawing attempt - im leaving this for now -- it will go into a custom class later when I get unlazy
+        bulletArray = new Array();
+        bulletGraphics = new createjs.Graphics();
+        bulletGraphics.setStrokeStyle(1);
+        bulletGraphics.beginStroke("#66d9ff");
+        bulletGraphics.beginFill("#b3ecff");
+        bulletGraphics.drawCircle(0,0,3);
+
+
 
         // get reference to canvas
         canvas = document.getElementById("stage");
@@ -86,15 +102,15 @@
 
         //putting stars in random places using the randomRange function and adding to the stage
         for (var i = 0; i < 100; i++) {
-            shape = new createjs.Shape(graphics);
-            stars.push(shape);
-            shape.x = randomRange(10, 630);
-            shape.y = randomRange(-250, 470);
-            shape.scaleX = randomRange(0.5, 2);
-            shape.scaleY = shape.scaleX;
-            shape.alpha = Math.random() + 0.2;
+            starShape = new createjs.Shape(graphics);
+            stars.push(starShape);
+            starShape.x = randomRange(10, 630);
+            starShape.y = randomRange(-250, 470);
+            starShape.scaleX = randomRange(0.5, 2);
+            starShape.scaleY = starShape.scaleX;
+            starShape.alpha = Math.random() + 0.2;
             
-            stage.addChild(shape);
+            stage.addChild(starShape);
         }
     }
 
@@ -180,28 +196,57 @@
         break;  
         // down  
         case 40: downKey = false;  
-        break;    
+        break;  
+        //space bar for bullets
+        case 32: fireBullet();
+        break;  
     }  
 }
+
+    //draw bullets and add them to the stage based off the ship x/y position
+    function fireBullet() {
+        bulletShape = new createjs.Shape(bulletGraphics);
+        bulletShape.scaleY = 1.5;
+        bulletShape.x = ship.x;
+        bulletShape.y = ship.y - 30;
+        bulletArray.push(bulletShape);
+
+        stage.addChild(bulletShape);
+    }
+
+    /* loop through the bullet array and update the y position. If a bullet moves
+       of the screen it removes it from the stage. Finally removing the bullets
+       from the array and replacing them. */
+    function updateBullets() {
+        var bulletLimit = bulletArray.length - 1;
+
+        for (var i = bulletLimit; i >=0; --i) {
+            bulletArray[i].y -= bulletSpeed;
+            if (bulletArray[i].y < -3) {
+                stage.removeChild(bulletArray[i]);
+                bulletArray.splice(i, i)
+            }
+        }
+    }
 
     //using this to check for movement and to set a boundry
     function checkMovement() {  
     //set a boundry for top/down/right/left -- think of it as an invisible border around the canvas
     if (leftKey) {  
-        if (ship.x - speed > 20)  
-            ship.x -= speed;  
+        if (ship.x - shipSpeed > 20)  
+            ship.x -= shipSpeed;  
     }  
     else if (rightKey) {  
-        if (ship.x + speed < 620)  
-            ship.x += speed;  
+        if (ship.x + shipSpeed < 620)  
+            ship.x += shipSpeed;  
     }                        
     if (upKey) {  
-        if (ship.y - speed > 24)  
-            ship.y -= speed;  
+        if (ship.y - shipSpeed > 24)  
+            ship.y -= shipSpeed;  
     }  
     else if (downKey) {  
-        if (ship.y + speed < 460)  
-            ship.y += speed;  
+        if (ship.y + shipSpeed < 460)  
+            ship.y += shipSpeed;  
     }  
 }
 
@@ -210,7 +255,7 @@
         document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());
 
         //calling the method to monitor keys
-        // monitorKeys();
+        // monitorKeys();        
 
         //updating the background
         updateBackground();
