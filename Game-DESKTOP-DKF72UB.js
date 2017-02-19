@@ -64,8 +64,6 @@
         bulletGraphics.beginFill("#b3ecff");
         bulletGraphics.drawCircle(0,0,3);
 
-
-
         // get reference to canvas
         canvas = document.getElementById("stage");
         // set canvas to as wide/high as the browser window
@@ -255,10 +253,7 @@
         document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());
 
         //calling the method to monitor keys
-        // monitorKeys();    
-
-        //call the bullet update
-        updateBullets();    
+        // monitorKeys();        
 
         //updating the background
         updateBackground();
