@@ -39,10 +39,18 @@
     var currentStar = null;
     var limit = null;
 
-    //enemy objects 
-    var enemy = null;
+    //enemyArray objects 
+    var enemyArray = null;
     var enemyBitmap = null; 
-    var updateLimit = null;  
+    var updateLimit = null; 
+
+    //colision objects
+    var difX;
+    var difY;
+    var bulletAmount;
+    var enemyAmount;
+    var currentEnemy;
+    var currentBullet; 
 
     //------------------------------------------------------------- private methods
     
@@ -59,8 +67,8 @@
         bulletGraphics.beginFill("#b3ecff");
         bulletGraphics.drawCircle(0,0,3);
 
-        //store enemy in array
-        enemy = new Array();
+        //store enemyArray in array
+        enemyArray = new Array();
 
         // get reference to canvas
         canvas = document.getElementById("stage");
@@ -99,7 +107,7 @@
         ship.regY = ship.getBounds().height/2;                
         stage.addChild(ship);
 
-        //testing what an enemy will look like on the stage -- FIX THE NASTY COLORS
+        //testing what an enemyArray will look like on the stage -- FIX THE NASTY COLORS
         // enemyBitmap = new createjs.Bitmap("lib/enemy.png");
         // stage.addChild(enemyBitmap);
 
@@ -193,95 +201,144 @@
        to rain down and try and hit the player. 
      */
     function createEnemies() {
-        if (randomRange(0, 100) > 80 && enemy.length < enemyLimit) {
+        if (randomRange(0, 100) > 80 && enemyArray.length < enemyLimit) {
             enemyBitmap = new createjs.Bitmap("lib/enemy.png");
             enemyBitmap.regX = enemyBitmap.image.width * 0.5;
             enemyBitmap.regY = enemyBitmap.image.height * 0.5;
             enemyBitmap.x = randomRange(20, 630);
             enemyBitmap.y = -randomRange(50, 100);
-            enemy.push(enemyBitmap);
+            enemyArray.push(enemyBitmap);
             stage.addChild(enemyBitmap);
         }
     } 
 
     /* This function loops through the array and updated the y position (like the stars) 
-       If the position is greater than 500 remove the old enemy form the stage/array and prep for a new one
+       If the position is greater than 500 remove the old enemyArray form the stage/array and prep for a new one
     */
     function updateEnemies() {
-        updateLimit = enemy.length -1;
+        updateLimit = enemyArray.length -1;
         for (var i = updateLimit; i >= 0; --i) {
-            enemy[i].y += enemySpeed;
-            if (enemy[i].y > 500) {
-                stage.removeChild(enemy[i]);
-                enemy.splice(i, 1);
+            enemyArray[i].y += enemySpeed;
+            if (enemyArray[i].y > 500) {
+                stage.removeChild(enemyArray[i]);
+                enemyArray.splice(i, 1);
             }
         }
     }
 
     //key down to make things move
     function onKeyDown(e) {       
-    if(!e){ var e = window.event; }                
-    switch(e.keyCode) {  
-        // left  
-        case 37: leftKey = true; rightKey = false;      
-        break;                    
-        // up  
-        case 38: upKey = true; downKey = false;  
-        break;                    
-        // right  
-        case 39: rightKey = true; leftKey = false;  
-        break;                                        
-        // down  
-        case 40: downKey = true; upKey = false;  
-        break;  
+        if(!e){ var e = window.event; }                
+            switch(e.keyCode) {  
+            // left  
+            case 37: leftKey = true; rightKey = false;      
+            break;                    
+            // up  
+            case 38: upKey = true; downKey = false;  
+            break;                    
+            // right  
+            case 39: rightKey = true; leftKey = false;  
+            break;                                        
+            // down  
+            case 40: downKey = true; upKey = false;  
+            break;  
+        }  
     }  
-}  
     //key up to make things move more and handling the bullet firing
     function onKeyUp(e) {         
-     if(!e){ var e = window.event; }  
-     switch(e.keyCode) {  
-        // left  
-        case 37: leftKey = false;   
-        break;                    
-        // up  
-        case 38: upKey = false;  
-        break;  
-        // right  
-        case 39: rightKey = false;  
-        break;  
-        // down  
-        case 40: downKey = false;  
-        break;  
-        //space bar for bullets
-        case 32: fireBullet();
-        break;  
-    }  
-}
+        if(!e){ var e = window.event; }  
+            switch(e.keyCode) {  
+            // left  
+            case 37: leftKey = false;   
+            break;                    
+            // up  
+            case 38: upKey = false;  
+            break;  
+            // right  
+            case 39: rightKey = false;  
+            break;  
+            // down  
+            case 40: downKey = false;  
+            break;  
+            //space bar for bullets
+            case 32: fireBullet();
+            break;  
+        }  
+    }
+
+    /* This function measures the distance between two objects using the differences
+       I'm sure it's not absolutely pixel perfect but it'll work.  */
+    function distanceBetween(objectOne, objectTwo) {
+        difX = objectTwo.x - objectOne.x;
+        difY = objectTwo.y - objectOne.y;
+
+        //returning the final distance
+        return Math.sqrt((difX*difX) + (difY*difY));
+    }
+
+    /* First this function stores the amount of enemies/bullets there are it works in conjunction
+       with the variables created to hold the current enemy and bullet. Next using the previous set
+       registration points it loops through and checks to see if they make contact. Finally is the same
+       except with bullets/enemies if the distance is less than half tjhe enemy a collision happened and 
+       it'll remove the enemy and bullet from the stage/array and finally a reset of the array incase there
+       was a change in the number of bullets in the original array  */
+    function collision() {
+        //these store the number of bullets/enemies
+        enemyAmount = enemyArray.length - 1;
+        bulletAmount = bulletArray.length -1;
+
+        //this uses the registration points set earlier(the center of enemies/player) to check if they collide
+        for (var i = enemyAmount; i >= 0; --i) {
+            currentEnemy = enemyArray[i];
+            //checking the player/enemy collision
+            if (distanceBetween(currentEnemy, ship) < 45) {
+                console.log("I've been hit");
+            }
+            
+            //using this loop to check distance between an enemy and a bullet registration point
+            for (var j = bulletAmount; j >= 0; --j) {
+                currentBullet = bulletArray[j];
+                //check bullet/enemy collision                
+                if (distanceBetween(currentEnemy, currentBullet) < 32) {
+                    stage.removeChild(currentEnemy);
+                    stage.removeChild(currentBullet);
+                    enemyArray.splice(i, 1);
+                    bulletArray.splice(j, 1);
+                }
+            }
+            //reseting the array incase of a change of bullets
+            bulletAmount = bulletArray.length - 1;
+        }
+        
+    }
 
     //using this to check for movement and to set a boundry
     function checkMovement() {  
-    //set a boundry for top/down/right/left -- think of it as an invisible border around the canvas
-    if (leftKey) {  
-        if (ship.x - shipSpeed > 20)  
-            ship.x -= shipSpeed;  
-    }  
-    else if (rightKey) {  
-        if (ship.x + shipSpeed < 620)  
-            ship.x += shipSpeed;  
-    }                        
-    if (upKey) {  
-        if (ship.y - shipSpeed > 24)  
-            ship.y -= shipSpeed;  
-    }  
-    else if (downKey) {  
-        if (ship.y + shipSpeed < 460)  
-            ship.y += shipSpeed;  
-    }  
-}
+        //set a boundry for top/down/right/left -- think of it as an invisible border around the canvas
+        if (leftKey) {  
+            if (ship.x - shipSpeed > 20)  
+                ship.x -= shipSpeed;  
+        }  
+        else if (rightKey) {  
+            if (ship.x + shipSpeed < 620)  
+                ship.x += shipSpeed;  
+        }                        
+        if (upKey) {  
+            if (ship.y - shipSpeed > 24)  
+                ship.y -= shipSpeed;  
+        }  
+        else if (downKey) {  
+            if (ship.y + shipSpeed < 460)  
+                ship.y += shipSpeed;  
+        }  
+    }
 
     function onTick(e) {
         // TESTING FPS
         document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());            
+
+        //checking for collision
+        collision();
 
         //create the enemies 
         createEnemies();
