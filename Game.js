@@ -42,15 +42,20 @@
     //enemyArray objects 
     var enemyArray = null;
     var enemyBitmap = null; 
-    var updateLimit = null; 
+    var updateEnemyLimit = null; 
 
     //colision objects
-    var difX;
-    var difY;
-    var bulletAmount;
-    var enemyAmount;
-    var currentEnemy;
-    var currentBullet; 
+    var difX = null;
+    var difY = null;
+    var bulletAmount = null;
+    var enemyAmount = null;
+    var currentEnemy = null;
+    var currentBullet = null;
+
+    //explison objects
+    var explosionArray = null;
+    var explosionBitmap = null;
+    var updateExplosionLimit = null; 
 
     //------------------------------------------------------------- private methods
     
@@ -59,16 +64,19 @@
     function onInit() {
         console.log(">> initializing");
 
+        //explosion array
+        explosionArray = new Array();
+
+        //store enemyArray in array
+        enemyArray = new Array();
+
         //bullet drawing attempt
         bulletArray = new Array();
         bulletGraphics = new createjs.Graphics();
         bulletGraphics.setStrokeStyle(1);
         bulletGraphics.beginStroke("#66d9ff");
         bulletGraphics.beginFill("#b3ecff");
-        bulletGraphics.drawCircle(0,0,3);
-
-        //store enemyArray in array
-        enemyArray = new Array();
+        bulletGraphics.drawCircle(0,0,3);        
 
         // get reference to canvas
         canvas = document.getElementById("stage");
@@ -110,6 +118,9 @@
         //testing what an enemyArray will look like on the stage -- FIX THE NASTY COLORS
         // enemyBitmap = new createjs.Bitmap("lib/enemy.png");
         // stage.addChild(enemyBitmap);
+        //testing explosions -- fix yucky explosion
+        // explosionBitmap = new createjs.Bitmap("lib/explosion.png");
+        // stage.addChild(explosionBitmap);        
 
         //setup event listeners for Keyboard
         document.addEventListener("keydown", onKeyDown);
@@ -176,7 +187,6 @@
         bulletShape.x = ship.x;
         bulletShape.y = ship.y - 30;
         bulletArray.push(bulletShape);
-
         stage.addChild(bulletShape);
     }
 
@@ -216,12 +226,39 @@
        If the position is greater than 500 remove the old enemyArray form the stage/array and prep for a new one
     */
     function updateEnemies() {
-        updateLimit = enemyArray.length -1;
-        for (var i = updateLimit; i >= 0; --i) {
+        updateEnemyLimit = enemyArray.length -1;
+        for (var i = updateEnemyLimit; i >= 0; --i) {
             enemyArray[i].y += enemySpeed;
             if (enemyArray[i].y > 500) {
                 stage.removeChild(enemyArray[i]);
                 enemyArray.splice(i, 1);
+            }
+        }
+    }
+
+    /* since flash is broken I'm using bitmaps and it's the same code as above with enemies
+       this simply makes explosions and positions them. It also sets the registration point
+       to the center as usual with all of my game objects and adds the explosion to the array */
+    function createExplosion(positionX, positionY) {
+        explosionBitmap = new createjs.Bitmap("lib/explosion.png");
+        explosionBitmap.regX = explosionBitmap.image.width * 0.5;
+        explosionBitmap.regY = explosionBitmap.image.height * 0.5;
+        explosionBitmap.x = positionX;
+        explosionBitmap.y = positionY;
+        explosionArray.push(explosionBitmap);
+        stage.addChild(explosionBitmap);
+    }
+
+    /* This update works similar to the enemies aswell it loops through and with me being lazy
+       to fix flash and my sprites I'm using alpha to fade away the explosion to give it an effect
+       and finally removing it from the array to prep for a new one */
+    function updateExplosion() {
+        updateExplosionLimit = explosionArray.length - 1;
+        for (var i = updateExplosionLimit; i >= 0; --i) {
+            explosionArray[i].alpha -= 0.1;
+            if (explosionArray[i].alpha <= 0) {
+                stage.removeChild(explosionArray[i]);
+                explosionArray.splice(i, 1);
             }
         }
     }
@@ -264,7 +301,7 @@
             case 32: fireBullet();
             break;  
         }  
-    }
+    }    
 
     /* This function measures the distance between two objects using the differences
        I'm sure it's not absolutely pixel perfect but it'll work.  */
@@ -302,6 +339,8 @@
                 if (distanceBetween(currentEnemy, currentBullet) < 32) {
                     stage.removeChild(currentEnemy);
                     stage.removeChild(currentBullet);
+                    //here I call the explosion method to make things go boom!..
+                    createExplosion(currentEnemy.x, currentEnemy.y);
                     enemyArray.splice(i, 1);
                     bulletArray.splice(j, 1);
                 }
@@ -350,7 +389,10 @@
         updateBullets(); 
 
         //update the enemies 
-        updateEnemies();           
+        updateEnemies(); 
+
+        //update explosions
+        updateExplosion();          
 
         //checking for player movement for each frame
         checkMovement();        
