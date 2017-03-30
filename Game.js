@@ -13,6 +13,11 @@
     // game objects
     var assetManager = null;
     var ship = null;
+    var gameOver = false;
+    var gameOverText = null;
+    var scoreText = null;
+    var playerScore = null;
+    var restartText = null;
 
     //bullet objects
     var bulletArray = null;
@@ -55,23 +60,20 @@
     //explison objects
     var explosionArray = null;
     var explosionBitmap = null;
-    var updateExplosionLimit = null; 
-
-    //------------------------------------------------------------- private methods
+    var updateExplosionLimit = null;     
     
-
     // ------------------------------------------------------------ event handlers
     function onInit() {
         console.log(">> initializing");
 
         //explosion array
         explosionArray = new Array();
-
         //store enemyArray in array
         enemyArray = new Array();
-
-        //bullet drawing attempt
-        bulletArray = new Array();
+        //bullet array 
+        bulletArray = new Array();                
+        
+        //drawing bullets
         bulletGraphics = new createjs.Graphics();
         bulletGraphics.setStrokeStyle(1);
         bulletGraphics.beginStroke("#66d9ff");
@@ -115,12 +117,11 @@
         ship.regY = ship.getBounds().height/2;                
         stage.addChild(ship);
 
-        //testing what an enemyArray will look like on the stage -- FIX THE NASTY COLORS
-        // enemyBitmap = new createjs.Bitmap("lib/enemy.png");
-        // stage.addChild(enemyBitmap);
-        //testing explosions -- fix yucky explosion
-        // explosionBitmap = new createjs.Bitmap("lib/explosion.png");
-        // stage.addChild(explosionBitmap);        
+        //adding the score
+        scoreText = new createjs.Text('0', "14pt bold Arial", "#FFFFFF");        
+        scoreText.x = 10;
+        scoreText.y = 10;        
+        stage.addChild(scoreText);                        
 
         //setup event listeners for Keyboard
         document.addEventListener("keydown", onKeyDown);
@@ -188,6 +189,8 @@
         bulletShape.y = ship.y - 30;
         bulletArray.push(bulletShape);
         stage.addChild(bulletShape);
+        //for my happiness
+        console.log("Pew..Pew..");
     }
 
     /* loop through the bullet array and update the y position. If a bullet moves
@@ -236,18 +239,19 @@
         }
     }
 
-    /* since flash is broken I'm using bitmaps and it's the same code as above with enemies
+    /* This is basically the same code as above with enemies just it handles explosions
        this simply makes explosions and positions them. It also sets the registration point
        to the center as usual with all of my game objects and adds the explosion to the array */
-    function createExplosion(positionX, positionY) {
-        explosionBitmap = new createjs.Bitmap("lib/explosion.png");
-        explosionBitmap.regX = explosionBitmap.image.width * 0.5;
-        explosionBitmap.regY = explosionBitmap.image.height * 0.5;
+    function createExplosion(positionX, positionY) {        
+        explosionBitmap = assetManager.getSprite("assets");        
+        explosionBitmap.regX = explosionBitmap.getBounds().width/2;
+        explosionBitmap.regY = explosionBitmap.getBounds().height/2;
         explosionBitmap.x = positionX;
         explosionBitmap.y = positionY;
+        explosionBitmap.gotoAndPlay("Death");                
         explosionArray.push(explosionBitmap);
         stage.addChild(explosionBitmap);
-    }
+    }    
 
     /* This update works similar to the enemies aswell it loops through and with me being lazy
        to fix flash and my sprites I'm using alpha to fade away the explosion to give it an effect
@@ -255,7 +259,7 @@
     function updateExplosion() {
         updateExplosionLimit = explosionArray.length - 1;
         for (var i = updateExplosionLimit; i >= 0; --i) {
-            explosionArray[i].alpha -= 0.1;
+            explosionArray[i].alpha -= 0.02;
             if (explosionArray[i].alpha <= 0) {
                 stage.removeChild(explosionArray[i]);
                 explosionArray.splice(i, 1);
@@ -299,6 +303,9 @@
             break;  
             //space bar for bullets
             case 32: fireBullet();
+            break;
+            //r key to reset
+            case 82: reset();
             break;  
         }  
     }    
@@ -328,8 +335,9 @@
         for (var i = enemyAmount; i >= 0; --i) {
             currentEnemy = enemyArray[i];
             //checking the player/enemy collision
-            if (distanceBetween(currentEnemy, ship) < 45) {
-                console.log("I've been hit");
+            if (distanceBetween(currentEnemy, ship) < 30) {
+                console.log("Ahhh....I've been hit..");
+                endGame();
             }
             
             //using this loop to check distance between an enemy and a bullet registration point
@@ -343,12 +351,46 @@
                     createExplosion(currentEnemy.x, currentEnemy.y);
                     enemyArray.splice(i, 1);
                     bulletArray.splice(j, 1);
+                    console.log("Boom..");
+                    //increment the score when an enemy is killed
+                    scoreText.text = parseInt(scoreText.text + 10);
+                    // console.log(playerScore);
                 }
             }
             //reseting the array incase of a change of bullets
             bulletAmount = bulletArray.length - 1;
-        }
-        
+        }        
+    }
+
+    /* Setting a game over function to make an explosion where the player died then removing the ship.
+       Finally setting the gameOver bool to true and adding an arcade like game over screen  */
+    function endGame() {
+        //make explosion where the ship is and remove ship
+        createExplosion(ship.x, ship.y);
+        stage.removeChild(ship);
+        //set gameOver equal to true
+        gameOver = true;                
+
+        //set game over screen
+        gameOverText = new createjs.Text("GAME OVER", "72pt bold Arial", "#CC0000");
+        gameOverText.textAlign = "center";
+        gameOverText.x = 320;
+        gameOverText.y = 200;        
+        stage.addChild(gameOverText);        
+
+        //why...
+        restartText = new createjs.Text("Press R to restart", "16pt bold Arial", "#FFFFFF");
+        restartText.textAlign = "center";
+        restartText.x = 320;
+        restartText.y = 290;
+        stage.addChild(restartText);
+    }
+
+    /* simple reset function to restart the game by press R.
+       I set gameOver to false to unprove the endGame bool */
+    function reset() {
+        gameOver = false;
+        onInit();        
     }
 
     //using this to check for movement and to set a boundry
@@ -370,33 +412,30 @@
             if (ship.y + shipSpeed < 460)  
                 ship.y += shipSpeed;  
         }  
-    }
+    }    
 
     function onTick(e) {
         // TESTING FPS
-        document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());            
+        document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());
 
-        //checking for collision
-        collision();
-
-        //create the enemies 
-        createEnemies();
+        //checking for a game over
+        if (gameOver != true) {
+            //checking for collision
+            collision();
+            //create the enemies 
+            createEnemies();
+            //checking for player movement for each frame
+            checkMovement();   
+        }        
 
         //updating the background
         updateBackground();
-
         //call the bullet update
         updateBullets(); 
-
         //update the enemies 
         updateEnemies(); 
-
         //update explosions
-        updateExplosion();          
-
-        //checking for player movement for each frame
-        checkMovement();        
-
+        updateExplosion();                       
         // update the stage!
         stage.update();
     }
