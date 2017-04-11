@@ -71,7 +71,7 @@
     //sound stuff    
     var pewPewSound = "pew";
     var boomSound = "boom"; 
-    var startSound = "start";        
+    var startSound = "start";      
     
     // ------------------------------------------------------------ event handlers
     function onInit() {
@@ -216,11 +216,14 @@
             bulletShape.scaleY = 1.5;
             bulletShape.x = ship.x;
             bulletShape.y = ship.y - 30;
-            bulletArray.push(bulletShape);
-            stage.addChild(bulletShape);
-            //for my happiness
-            console.log("Pew..Pew..");
-            pewSound();
+            //limtiing the bullets to 3            
+            if (bulletArray.length <= 3) {  
+                bulletArray.push(bulletShape);            
+                stage.addChild(bulletShape);                
+                pewSound();
+                //for my happiness
+                console.log("Pew..Pew..");
+            }                                    
         }
     }
 
@@ -333,7 +336,7 @@
             case 40: downKey = false;  
             break;  
             //space bar for bullets
-            case 32: fireBullet();
+            case 32: fireBullet();             
             break;
             //r key to reset
             case 82: reset();
@@ -341,7 +344,7 @@
             //enter to start the game
             case 13: gameStart();
             break;                                
-        }  
+        }        
     }    
 
     //using this to check for movement and to set a boundry
