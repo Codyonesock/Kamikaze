@@ -13,7 +13,7 @@
     // game objects
     var assetManager = null;
     var ship = null;
-    var gameOver = false;
+    var gameOver = false;    
     var gameOverText = null;
     var scoreText = null;
     var playerScore = null;
@@ -26,10 +26,10 @@
     var bulletLimit = null;
 
     //settings
-    var shipSpeed = 8;
+    var shipSpeed = 10;
     var bulletSpeed = 20;
-    var enemyLimit = 8;
-    var enemySpeed = 8;    
+    var enemyLimit = 20;
+    var enemySpeed = 13;    
 
     //key booleans
     var downKey = false;
@@ -60,7 +60,12 @@
     //explison objects
     var explosionArray = null;
     var explosionBitmap = null;
-    var updateExplosionLimit = null;     
+    var updateExplosionLimit = null;  
+
+    //sound stuff    
+    var pewPewSound = "pew";
+    var boomSound = "boom"; 
+    var resetSound = "reset";
     
     // ------------------------------------------------------------ event handlers
     function onInit() {
@@ -95,12 +100,12 @@
         assetManager = new AssetManager(stage);
         stage.addEventListener("onAllAssetsLoaded", onSetup);
         // load the assets
-        assetManager.loadAssets(manifest);
+        assetManager.loadAssets(manifest);        
     }
 
     function onSetup(e) {
         console.log(">> adding sprites to game");
-        stage.removeEventListener("onAllAssetsLoaded", onSetup);
+        stage.removeEventListener("onAllAssetsLoaded", onSetup);        
 
         //intialize keys - no keys pressed
         downKey = false;
@@ -131,14 +136,27 @@
         createjs.Ticker.setFPS(frameRate);
         createjs.Ticker.addEventListener("tick", onTick);
 
+        //load sounds        
+        createjs.Sound.registerSound("lib/sounds/Galaga_Firing_Sound_Effect.mp3", pewPewSound);
+        createjs.Sound.registerSound("lib/sounds/8-Bit-SFX_Explosion_21.mp3", boomSound);
+        createjs.Sound.registerSound("lib/sounds/Galaga_Level_Start_Sound_Effect.mp3", resetSound);
+
         console.log(">> game ready");
     }
+
+    /* Adding sounds to the game here. I loaded them prior and made functions to use them when needed. */
+    function pewSound() {                
+        createjs.Sound.play(pewPewSound);
+    }    
+    function deadSound() {
+        createjs.Sound.play(boomSound);
+    }    
 
     //function that returns a random range based off min and max
     function randomRange(min, max) {
         return Math.floor(Math.random() * (max - min)) + min;
     }       
-
+    //------------------------------------------------------------------------BACKGROUND
     function drawBackground(e) {
         //array for the stars
         stars = new Array();
@@ -180,7 +198,7 @@
             }
         }
     }        
-
+    //-----------------------------------------------------------------------------------BULLETS
     //draw bullets and add them to the stage based off the ship x/y position
     function fireBullet() {
         bulletShape = new createjs.Shape(bulletGraphics);
@@ -191,6 +209,7 @@
         stage.addChild(bulletShape);
         //for my happiness
         console.log("Pew..Pew..");
+        pewSound();
     }
 
     /* loop through the bullet array and update the y position. If a bullet moves
@@ -207,7 +226,7 @@
             }
         }
     }
-
+    //---------------------------------------------------------------------------------------------------------ENEMIES
     /* Doing the same exact thing I did with bullets/stars and setting the registration point to the center.
        Finally it creates more enemies unless the enemyLimit is reached. Instead of my inital plan to have pathing
        with multiple different enemies like the original Galaga I've decided a spin and to have kamikaze pilots
@@ -238,7 +257,7 @@
             }
         }
     }
-
+    //-------------------------------------------------------------------------------------------------EXPLOSION
     /* This is basically the same code as above with enemies just it handles explosions
        this simply makes explosions and positions them. It also sets the registration point
        to the center as usual with all of my game objects and adds the explosion to the array */
@@ -266,7 +285,7 @@
             }
         }
     }
-
+    //--------------------------------------------------------------------MOVER
     //key down to make things move
     function onKeyDown(e) {       
         if(!e){ var e = window.event; }                
@@ -306,10 +325,31 @@
             break;
             //r key to reset
             case 82: reset();
-            break;  
+            break;                       
         }  
     }    
 
+    //using this to check for movement and to set a boundry
+    function checkMovement() {  
+        //set a boundry for top/down/right/left -- think of it as an invisible border around the canvas
+        if (leftKey) {  
+            if (ship.x - shipSpeed > 20)  
+                ship.x -= shipSpeed;  
+        }  
+        else if (rightKey) {  
+            if (ship.x + shipSpeed < 620)  
+                ship.x += shipSpeed;  
+        }                        
+        if (upKey) {  
+            if (ship.y - shipSpeed > 24)  
+                ship.y -= shipSpeed;  
+        }  
+        else if (downKey) {  
+            if (ship.y + shipSpeed < 460)  
+                ship.y += shipSpeed;  
+        }  
+    }
+    //-------------------------------------------------------------------------------------COLLISION
     /* This function measures the distance between two objects using the differences
        I'm sure it's not absolutely pixel perfect but it'll work.  */
     function distanceBetween(objectOne, objectTwo) {
@@ -337,6 +377,7 @@
             //checking the player/enemy collision
             if (distanceBetween(currentEnemy, ship) < 30) {
                 console.log("Ahhh....I've been hit..");
+                deadSound();
                 endGame();
             }
             
@@ -352,6 +393,7 @@
                     enemyArray.splice(i, 1);
                     bulletArray.splice(j, 1);
                     console.log("Boom..");
+                    deadSound();
                     //increment the score when an enemy is killed
                     scoreText.text = parseInt(scoreText.text + 10);
                     // console.log(playerScore);
@@ -361,7 +403,7 @@
             bulletAmount = bulletArray.length - 1;
         }        
     }
-
+    //---------------------------------------------------------------------------------------------------GAME STATES           
     /* Setting a game over function to make an explosion where the player died then removing the ship.
        Finally setting the gameOver bool to true and adding an arcade like game over screen  */
     function endGame() {
@@ -384,40 +426,19 @@
         restartText.x = 320;
         restartText.y = 290;
         stage.addChild(restartText);
-    }
+    }        
 
     /* simple reset function to restart the game by press R.
        I set gameOver to false to unprove the endGame bool */
     function reset() {
-        gameOver = false;
-        onInit();        
-    }
+        gameOver = false;               
+        onInit();                
+        createjs.Sound.play(resetSound);                 
+    }        
 
-    //using this to check for movement and to set a boundry
-    function checkMovement() {  
-        //set a boundry for top/down/right/left -- think of it as an invisible border around the canvas
-        if (leftKey) {  
-            if (ship.x - shipSpeed > 20)  
-                ship.x -= shipSpeed;  
-        }  
-        else if (rightKey) {  
-            if (ship.x + shipSpeed < 620)  
-                ship.x += shipSpeed;  
-        }                        
-        if (upKey) {  
-            if (ship.y - shipSpeed > 24)  
-                ship.y -= shipSpeed;  
-        }  
-        else if (downKey) {  
-            if (ship.y + shipSpeed < 460)  
-                ship.y += shipSpeed;  
-        }  
-    }    
-
-    function onTick(e) {
+    function onTick(e) {        
         // TESTING FPS
-        document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());
-
+        document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());        
         //checking for a game over
         if (gameOver != true) {
             //checking for collision
@@ -438,6 +459,6 @@
         updateExplosion();                       
         // update the stage!
         stage.update();
-    }
+    }        
 
 })();
