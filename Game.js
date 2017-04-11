@@ -13,11 +13,17 @@
     // game objects
     var assetManager = null;
     var ship = null;
-    var gameOver = false;    
+    var gameOver = false;        
+    var startGame = false;    
+    var playerScore = null;    
+
+    //text objects
     var gameOverText = null;
-    var scoreText = null;
-    var playerScore = null;
+    var instructonTextOne = null;
+    var instructonTextTwo = null;
     var restartText = null;
+    var startText = null;
+    var scoreText = null;
 
     //bullet objects
     var bulletArray = null;
@@ -29,7 +35,7 @@
     var shipSpeed = 10;
     var bulletSpeed = 20;
     var enemyLimit = 20;
-    var enemySpeed = 13;    
+    var enemySpeed = 5;    
 
     //key booleans
     var downKey = false;
@@ -65,11 +71,11 @@
     //sound stuff    
     var pewPewSound = "pew";
     var boomSound = "boom"; 
-    var resetSound = "reset";
+    var startSound = "start";        
     
     // ------------------------------------------------------------ event handlers
     function onInit() {
-        console.log(">> initializing");
+        console.log(">> initializing");        
 
         //explosion array
         explosionArray = new Array();
@@ -94,13 +100,13 @@
         stage = new createjs.Stage(canvas);
 
         //background graphics
-        drawBackground();
-
+        drawBackground();                
+        
         // construct preloader object to load spritesheet and sound assets
         assetManager = new AssetManager(stage);
-        stage.addEventListener("onAllAssetsLoaded", onSetup);
+        stage.addEventListener("onAllAssetsLoaded", onSetup);        
         // load the assets
-        assetManager.loadAssets(manifest);        
+        assetManager.loadAssets(manifest);                
     }
 
     function onSetup(e) {
@@ -123,7 +129,7 @@
         stage.addChild(ship);
 
         //adding the score
-        scoreText = new createjs.Text('0', "14pt bold Arial", "#FFFFFF");        
+        scoreText = new createjs.Text('0', "14pt bold Arial", "#66E0FF");        
         scoreText.x = 10;
         scoreText.y = 10;        
         stage.addChild(scoreText);                        
@@ -134,15 +140,19 @@
 
         // startup the ticker
         createjs.Ticker.setFPS(frameRate);
+
+        //the start screen text
+        startScreen();     
+                    
         createjs.Ticker.addEventListener("tick", onTick);
 
         //load sounds        
         createjs.Sound.registerSound("lib/sounds/Galaga_Firing_Sound_Effect.mp3", pewPewSound);
         createjs.Sound.registerSound("lib/sounds/8-Bit-SFX_Explosion_21.mp3", boomSound);
-        createjs.Sound.registerSound("lib/sounds/Galaga_Level_Start_Sound_Effect.mp3", resetSound);
+        createjs.Sound.registerSound("lib/sounds/Galaga_Level_Start_Sound_Effect.mp3", startSound);
 
         console.log(">> game ready");
-    }
+    }        
 
     /* Adding sounds to the game here. I loaded them prior and made functions to use them when needed. */
     function pewSound() {                
@@ -155,7 +165,7 @@
     //function that returns a random range based off min and max
     function randomRange(min, max) {
         return Math.floor(Math.random() * (max - min)) + min;
-    }       
+    }             
     //------------------------------------------------------------------------BACKGROUND
     function drawBackground(e) {
         //array for the stars
@@ -201,15 +211,17 @@
     //-----------------------------------------------------------------------------------BULLETS
     //draw bullets and add them to the stage based off the ship x/y position
     function fireBullet() {
-        bulletShape = new createjs.Shape(bulletGraphics);
-        bulletShape.scaleY = 1.5;
-        bulletShape.x = ship.x;
-        bulletShape.y = ship.y - 30;
-        bulletArray.push(bulletShape);
-        stage.addChild(bulletShape);
-        //for my happiness
-        console.log("Pew..Pew..");
-        pewSound();
+        if (startGame != false) {
+            bulletShape = new createjs.Shape(bulletGraphics);
+            bulletShape.scaleY = 1.5;
+            bulletShape.x = ship.x;
+            bulletShape.y = ship.y - 30;
+            bulletArray.push(bulletShape);
+            stage.addChild(bulletShape);
+            //for my happiness
+            console.log("Pew..Pew..");
+            pewSound();
+        }
     }
 
     /* loop through the bullet array and update the y position. If a bullet moves
@@ -325,7 +337,10 @@
             break;
             //r key to reset
             case 82: reset();
-            break;                       
+            break;
+            //enter to start the game
+            case 13: gameStart();
+            break;                                
         }  
     }    
 
@@ -396,6 +411,9 @@
                     deadSound();
                     //increment the score when an enemy is killed
                     scoreText.text = parseInt(scoreText.text + 10);
+                    //increasing the enemy limit and speed by 1 per kill
+                    enemySpeed += 1;
+                    enemyLimit += 1;
                     // console.log(playerScore);
                 }
             }
@@ -403,7 +421,32 @@
             bulletAmount = bulletArray.length - 1;
         }        
     }
-    //---------------------------------------------------------------------------------------------------GAME STATES           
+    //---------------------------------------------------------------------------------------------------GAME STATES 
+    function gameStart() {
+        startGame = true;
+        createjs.Sound.play(startSound);
+    }   
+    /* This is just a simple add some text to the initial start screen that tells you how to start */
+    function startScreen() {
+        startText = new createjs.Text("Press Enter to Start", "16pt bold Arial", "#66E0FF");
+        startText.textAlign = "center";
+        startText.x = 320;
+        startText.y = 200;
+        stage.addChild(startText);
+
+        instructonTextOne = new createjs.Text("	← ↑	↓ → to move", "12pt bold Arial", "#66E0FF");
+        instructonTextOne.textAlign = "center";
+        instructonTextOne.x = 320;
+        instructonTextOne.y = 225;
+        stage.addChild(instructonTextOne); 
+
+        instructonTextTwo = new createjs.Text("Enter To Shoot", "12pt bold Arial", "#66E0FF");
+        instructonTextTwo.textAlign = "center";
+        instructonTextTwo.x = 320;
+        instructonTextTwo.y = 245;
+        stage.addChild(instructonTextTwo);    
+    }    
+
     /* Setting a game over function to make an explosion where the player died then removing the ship.
        Finally setting the gameOver bool to true and adding an arcade like game over screen  */
     function endGame() {
@@ -431,34 +474,41 @@
     /* simple reset function to restart the game by press R.
        I set gameOver to false to unprove the endGame bool */
     function reset() {
-        gameOver = false;               
+        gameOver = false;                      
         onInit();                
-        createjs.Sound.play(resetSound);                 
+        createjs.Sound.play(startSound);                 
     }        
 
     function onTick(e) {        
         // TESTING FPS
-        document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());        
-        //checking for a game over
-        if (gameOver != true) {
-            //checking for collision
-            collision();
-            //create the enemies 
-            createEnemies();
-            //checking for player movement for each frame
-            checkMovement();   
-        }        
-
+        document.getElementById("fps").innerHTML = Math.floor(createjs.Ticker.getMeasuredFPS());
+        //starting the game   
+        if (startGame != false) {            
+            //removing start text
+            stage.removeChild(startText);
+            stage.removeChild(instructonTextOne);
+            stage.removeChild(instructonTextTwo);
+            //checking for a game over
+            if (gameOver != true) {
+                //checking for collision
+                collision();
+                //create the enemies 
+                createEnemies();
+                //checking for player movement for each frame
+                checkMovement();   
+            }                                
+                //call the bullet update
+                updateBullets(); 
+                //update the enemies 
+                updateEnemies(); 
+                //update explosions
+                updateExplosion();       
+        }                
         //updating the background
         updateBackground();
-        //call the bullet update
-        updateBullets(); 
-        //update the enemies 
-        updateEnemies(); 
-        //update explosions
-        updateExplosion();                       
         // update the stage!
         stage.update();
-    }        
+    }
+        
 
 })();
