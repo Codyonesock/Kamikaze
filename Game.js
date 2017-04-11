@@ -335,8 +335,8 @@
             // down  
             case 40: downKey = false;  
             break;  
-            //space bar for bullets
-            case 32: fireBullet();             
+            //space bar for bullets || checking for game over so you can't shoot in game over screen
+            case 32: if (gameOver != true) {fireBullet()};             
             break;
             //r key to reset
             case 82: reset();
@@ -443,7 +443,7 @@
         instructonTextOne.y = 225;
         stage.addChild(instructonTextOne); 
 
-        instructonTextTwo = new createjs.Text("Enter To Shoot", "12pt bold Arial", "#66E0FF");
+        instructonTextTwo = new createjs.Text("Space To Shoot", "12pt bold Arial", "#66E0FF");
         instructonTextTwo.textAlign = "center";
         instructonTextTwo.x = 320;
         instructonTextTwo.y = 245;
@@ -455,7 +455,7 @@
     function endGame() {
         //make explosion where the ship is and remove ship
         createExplosion(ship.x, ship.y);
-        stage.removeChild(ship);
+        stage.removeChild(ship);        
         //set gameOver equal to true
         gameOver = true;                
 
@@ -477,6 +477,10 @@
     /* simple reset function to restart the game by press R.
        I set gameOver to false to unprove the endGame bool */
     function reset() {
+        //resetting settings        
+        enemyLimit = 20;
+        enemySpeed = 5; 
+
         gameOver = false;                      
         onInit();                
         createjs.Sound.play(startSound);                 
